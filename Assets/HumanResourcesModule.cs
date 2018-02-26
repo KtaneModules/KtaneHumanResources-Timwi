@@ -85,20 +85,26 @@ public class HumanResourcesModule : MonoBehaviour
         var personToFire = FindPerson(_availableNames.Take(5), _availableDescs.Take(3));
         if (personToFire == null)
             goto tryAgain;
-        _personToFire = personToFire.Value;
+        _personToFire = personToFire.PersonIndex;
 
         var personToHire = FindPerson(_availableNames.Skip(5), _availableDescs.Skip(3).Concat(new[] { _personToFire }));
         if (personToHire == null)
             goto tryAgain;
-        _personToHire = personToHire.Value;
+        _personToHire = personToHire.PersonIndex;
 
-        Debug.LogFormat("[Human Resources #{0}] Employees: {1}, Applicants: {2}", _moduleId,
-            _availableNames.Take(5).Select(ix => string.Format("{0} ({1})", _people[ix].Name, _people[ix].MBTI)).JoinString(", "),
-            _availableNames.Skip(5).Select(ix => string.Format("{0} ({1})", _people[ix].Name, _people[ix].MBTI)).JoinString(", "));
-        Debug.LogFormat("[Human Resources #{0}] Complaints: {1}, Desired: {2}", _moduleId,
-            _availableDescs.Take(3).Select(ix => string.Format("{0} ({1})", _people[ix].Descriptor, _people[ix].MBTI)).JoinString(", "),
-            _availableDescs.Skip(3).Select(ix => string.Format("{0} ({1})", _people[ix].Descriptor, _people[ix].MBTI)).JoinString(", "));
+        Debug.LogFormat("[Human Resources #{0}] Complaints: {1}", _moduleId, _availableDescs.Take(3).Select(ix => string.Format("{0} ({1})", _people[ix].Descriptor, _people[ix].MBTI)).JoinString(", "));
+        Debug.LogFormat("[Human Resources #{0}] Required: {1}, preferred: {2}", _moduleId,
+            personToFire.Required.Length == 0 ? "(none)" : personToFire.Required.JoinString("+"),
+            personToFire.Preferred.Length == 0 ? "(none)" : personToFire.Preferred.JoinString("+"));
+        Debug.LogFormat("[Human Resources #{0}] Employees: {1}", _moduleId, _availableNames.Take(5).Select(ix => string.Format("{0} ({1})", _people[ix].Name, _people[ix].MBTI)).JoinString(", "));
         Debug.LogFormat("[Human Resources #{0}] Person to fire: {1} ({2})", _moduleId, _people[_personToFire].Name, _people[_personToFire].MBTI);
+        Debug.LogFormat("[Human Resources #{0}] Fired person adds desired trait: {1}", _moduleId, _people[_personToFire].Descriptor);
+
+        Debug.LogFormat("[Human Resources #{0}] Desired traits: {1}", _moduleId, _availableDescs.Skip(3).Concat(new[] { _personToFire }).Select(ix => string.Format("{0} ({1})", _people[ix].Descriptor, _people[ix].MBTI)).JoinString(", "));
+        Debug.LogFormat("[Human Resources #{0}] Required: {1}, preferred: {2}", _moduleId,
+            personToHire.Required.Length == 0 ? "(none)" : personToHire.Required.JoinString("+"),
+            personToHire.Preferred.Length == 0 ? "(none)" : personToHire.Preferred.JoinString("+"));
+        Debug.LogFormat("[Human Resources #{0}] Applicants: {1}", _moduleId, _availableNames.Skip(5).Select(ix => string.Format("{0} ({1})", _people[ix].Name, _people[ix].MBTI)).JoinString(", "));
         Debug.LogFormat("[Human Resources #{0}] Person to hire: {1} ({2})", _moduleId, _people[_personToHire].Name, _people[_personToHire].MBTI);
 
         _nameIndex = Rnd.Range(0, _availableNames.Length);
@@ -158,7 +164,7 @@ public class HumanResourcesModule : MonoBehaviour
         }
     }
 
-    private int? FindPerson(IEnumerable<int> names, IEnumerable<int> descs)
+    private FindPersonResult FindPerson(IEnumerable<int> names, IEnumerable<int> descs)
     {
         var required = "EINSFTJP".Where(ch => descs.All(ix => _people[ix].MBTI.Contains(ch))).ToArray();
         var preferred = ("EINSFTJP".Except(required)).Where(ch => descs.Count(ix => _people[ix].MBTI.Contains(ch)) == 2).ToArray();
@@ -171,13 +177,13 @@ public class HumanResourcesModule : MonoBehaviour
 
         if (peopleInfos[0].RequiredCount > peopleInfos[1].RequiredCount)
             // No tie!
-            return peopleInfos[0].Index;
+            return new FindPersonResult(peopleInfos[0].Index, required, preferred);
 
         // Number of required traits is tied; look at number of preferred traits
         var candidates = peopleInfos.Where(info => info.RequiredCount == peopleInfos[0].RequiredCount).OrderByDescending(info => info.PreferredCount).ToArray();
         if (candidates[0].PreferredCount > candidates[1].PreferredCount)
             // No tie this time!
-            return candidates[0].Index;
+            return new FindPersonResult(candidates[0].Index, required, preferred);
 
         // It’s still a tie; try again!
         return null;
