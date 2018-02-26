@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
-using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using HumanResources;
 using UnityEngine;
@@ -28,41 +25,46 @@ public class HumanResourcesModule : MonoBehaviour
 
     public TextMesh NamesText;
     public TextMesh DescsText;
+    private TextState _nameState = new TextState();
+    private TextState _descState = new TextState();
 
-    private Person[] People =
+    private Person[] _people =
     {
-        new Person{Name = "Rebecca", MBTI = "INTJ", Descriptor = "Intellectual"},
-        new Person{Name = "Damian", MBTI = "INTP", Descriptor = "Deviser"},
-        new Person{Name = "Jean", MBTI = "INFJ", Descriptor = "Confident"},
-        new Person{Name = "Mike", MBTI = "INFP", Descriptor = "Helper"},
-        new Person{Name = "River", MBTI = "ISTJ", Descriptor = "Auditor"},
-        new Person{Name = "Samuel", MBTI = "ISTP", Descriptor = "Innovator"},
-        new Person{Name = "Yoshi", MBTI = "ISFJ", Descriptor = "Defender"},
-        new Person{Name = "Caleb", MBTI = "ISFP", Descriptor = "Chameleon"},
-        new Person{Name = "Ashley", MBTI = "ENTJ", Descriptor = "Director"},
-        new Person{Name = "Tim", MBTI = "ENTP", Descriptor = "Designer"},
-        new Person{Name = "Eliott", MBTI = "ENFJ", Descriptor = "Educator"},
-        new Person{Name = "Ursula", MBTI = "ENFP", Descriptor = "Advocate"},
-        new Person{Name = "Silas", MBTI = "ESTJ", Descriptor = "Manager"},
-        new Person{Name = "Noah", MBTI = "ESTP", Descriptor = "Showman"},
-        new Person{Name = "Quinn", MBTI = "ESFJ", Descriptor = "Contributor"},
-        new Person{Name = "Dylan", MBTI = "ESFP", Descriptor = "Entertainer"}
+        new Person { Name = "Rebecca", MBTI = "INTJ", Descriptor = "Intellectual" },
+        new Person { Name = "Damian", MBTI = "INTP", Descriptor = "Deviser" },
+        new Person { Name = "Jean", MBTI = "INFJ", Descriptor = "Confident" },
+        new Person { Name = "Mike", MBTI = "INFP", Descriptor = "Helper" },
+        new Person { Name = "River", MBTI = "ISTJ", Descriptor = "Auditor" },
+        new Person { Name = "Samuel", MBTI = "ISTP", Descriptor = "Innovator" },
+        new Person { Name = "Yoshi", MBTI = "ISFJ", Descriptor = "Defender" },
+        new Person { Name = "Caleb", MBTI = "ISFP", Descriptor = "Chameleon" },
+        new Person { Name = "Ashley", MBTI = "ENTJ", Descriptor = "Director" },
+        new Person { Name = "Tim", MBTI = "ENTP", Descriptor = "Designer" },
+        new Person { Name = "Eliott", MBTI = "ENFJ", Descriptor = "Educator" },
+        new Person { Name = "Ursula", MBTI = "ENFP", Descriptor = "Advocate" },
+        new Person { Name = "Silas", MBTI = "ESTJ", Descriptor = "Manager" },
+        new Person { Name = "Noah", MBTI = "ESTP", Descriptor = "Showman" },
+        new Person { Name = "Quinn", MBTI = "ESFJ", Descriptor = "Contributor" },
+        new Person { Name = "Dylan", MBTI = "ESFP", Descriptor = "Entertainer" }
     };
 
-    private int[] AvailableNames;
-    private int[] AvailableDescs;
+    private int[] _availableNames;
+    private int[] _availableDescs;
 
-    private int NameIndex;
-    private int DescIndex;
+    private int _nameIndex;
+    private int _descIndex;
 
-    private int PersonToFire;
-    private int PersonToHire;
+    private int _personToFire;
+    private int _personToHire;
 
-    private bool CorrectFired = false;
-    private bool IsSolved = false;
+    private bool _correctFired = false;
+    private bool _isSolved = false;
 
     private static int _moduleIdCounter = 1;
     private int _moduleId;
+
+    private static string _green = "48E64F";
+    private static string _red = "E63B5E";
 
     void Start()
     {
@@ -71,61 +73,100 @@ public class HumanResourcesModule : MonoBehaviour
         ButtonRightNames.OnInteract += NamesCycleRight;
         ButtonLeftDescs.OnInteract += DescsCycleLeft;
         ButtonRightDescs.OnInteract += DescsCycleRight;
-        ButtonHire.OnInteract += ChooseHire;
-        ButtonFire.OnInteract += ChooseFire;
+        ButtonHire.OnInteract += Hire;
+        ButtonFire.OnInteract += Fire;
 
-    tryAgain:
+        tryAgain:
 
         // Choose 10 people and 5 descriptors
-        AvailableNames = Enumerable.Range(0, People.Length).ToList().Shuffle().Take(10).ToArray();
-        AvailableDescs = Enumerable.Range(0, People.Length).ToList().Shuffle().Take(5).ToArray();
+        _availableNames = Enumerable.Range(0, _people.Length).ToList().Shuffle().Take(10).ToArray();
+        _availableDescs = Enumerable.Range(0, _people.Length).ToList().Shuffle().Take(5).ToArray();
 
-        var personToFire = FindPerson(AvailableNames.Take(5), AvailableDescs.Take(3));
+        var personToFire = FindPerson(_availableNames.Take(5), _availableDescs.Take(3));
         if (personToFire == null)
             goto tryAgain;
-        PersonToFire = personToFire.Value;
+        _personToFire = personToFire.Value;
 
-        var personToHire = FindPerson(AvailableNames.Skip(5), AvailableDescs.Skip(3).Concat(new[] { PersonToFire }));
+        var personToHire = FindPerson(_availableNames.Skip(5), _availableDescs.Skip(3).Concat(new[] { _personToFire }));
         if (personToHire == null)
             goto tryAgain;
-        PersonToHire = personToHire.Value;
+        _personToHire = personToHire.Value;
 
         Debug.LogFormat("[Human Resources #{0}] Employees: {1}, Applicants: {2}", _moduleId,
-            AvailableNames.Take(5).Select(ix => string.Format("{0} ({1})", People[ix].Name, People[ix].MBTI)).JoinString(", "),
-            AvailableNames.Skip(5).Select(ix => string.Format("{0} ({1})", People[ix].Name, People[ix].MBTI)).JoinString(", "));
+            _availableNames.Take(5).Select(ix => string.Format("{0} ({1})", _people[ix].Name, _people[ix].MBTI)).JoinString(", "),
+            _availableNames.Skip(5).Select(ix => string.Format("{0} ({1})", _people[ix].Name, _people[ix].MBTI)).JoinString(", "));
         Debug.LogFormat("[Human Resources #{0}] Complaints: {1}, Desired: {2}", _moduleId,
-            AvailableDescs.Take(3).Select(ix => string.Format("{0} ({1})", People[ix].Descriptor, People[ix].MBTI)).JoinString(", "),
-            AvailableDescs.Skip(3).Select(ix => string.Format("{0} ({1})", People[ix].Descriptor, People[ix].MBTI)).JoinString(", "));
-        Debug.LogFormat("[Human Resources #{0}] Person to fire: {1} ({2})", _moduleId, People[PersonToFire].Name, People[PersonToFire].MBTI);
-        Debug.LogFormat("[Human Resources #{0}] Person to hire: {1} ({2})", _moduleId, People[PersonToHire].Name, People[PersonToHire].MBTI);
+            _availableDescs.Take(3).Select(ix => string.Format("{0} ({1})", _people[ix].Descriptor, _people[ix].MBTI)).JoinString(", "),
+            _availableDescs.Skip(3).Select(ix => string.Format("{0} ({1})", _people[ix].Descriptor, _people[ix].MBTI)).JoinString(", "));
+        Debug.LogFormat("[Human Resources #{0}] Person to fire: {1} ({2})", _moduleId, _people[_personToFire].Name, _people[_personToFire].MBTI);
+        Debug.LogFormat("[Human Resources #{0}] Person to hire: {1} ({2})", _moduleId, _people[_personToHire].Name, _people[_personToHire].MBTI);
 
-        NameIndex = Rnd.Range(0, AvailableNames.Length);
-        SetName();
-        DescIndex = Rnd.Range(0, AvailableDescs.Length);
-        SetDesc();
+        _nameIndex = Rnd.Range(0, _availableNames.Length);
+        setName();
+        _descIndex = Rnd.Range(0, _availableDescs.Length);
+        setDesc();
+
+        StartCoroutine(textCoroutine(NamesText, _nameState));
+        StartCoroutine(textCoroutine(DescsText, _descState));
     }
 
-    private void SetName()
+    private void setName()
     {
-        NamesText.text = People[AvailableNames[NameIndex]].Name;
-        NamesText.color = NameIndex < 5 ? Color.green : Color.red;
+        setText(_nameState, _people[_availableNames[_nameIndex]].Name, _nameIndex < 5 ? _green : _red);
     }
 
-    private void SetDesc()
+    private void setDesc()
     {
-        DescsText.text = People[AvailableDescs[DescIndex]].Descriptor;
-        DescsText.color = DescIndex < 3 ? Color.red : Color.green;
+        setText(_descState, _people[_availableDescs[_descIndex]].Descriptor, _descIndex < 3 ? _red : _green);
+    }
+
+    private void setText(TextState state, string newText, string newColor)
+    {
+        if (!state.CurrentlyDeleting)
+        {
+            state.DelText = state.InsText;
+            state.DelColor = state.InsColor;
+            state.CurrentlyDeleting = state.CurIndex > 0;
+        }
+        state.InsText = newText;
+        state.InsColor = newColor;
+    }
+
+    private IEnumerator textCoroutine(TextMesh mesh, TextState state)
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds(.05f);
+
+            if (state.CurrentlyDeleting)
+            {
+                state.CurIndex--;
+                mesh.text = string.Format("<color=#{0}>{1}</color><color=#D1D225>█</color>", state.DelColor, state.DelText.Substring(0, state.CurIndex));
+                if (state.CurIndex == 0)
+                    state.CurrentlyDeleting = false;
+                Audio.PlaySoundAtTransform("beep_short", mesh.transform);
+            }
+            else if (state.CurIndex < state.InsText.Length)
+            {
+                state.CurIndex++;
+                if (state.CurIndex < state.InsText.Length)
+                    mesh.text = string.Format("<color=#{0}>{1}</color><color=#D1D225>█</color>", state.InsColor, state.InsText.Substring(0, state.CurIndex));
+                else
+                    mesh.text = string.Format("<color=#{0}>{1}</color>", state.InsColor, state.InsText);
+                Audio.PlaySoundAtTransform("beep_short", mesh.transform);
+            }
+        }
     }
 
     private int? FindPerson(IEnumerable<int> names, IEnumerable<int> descs)
     {
-        var required = "EINSFTJP".Where(ch => descs.All(ix => People[ix].MBTI.Contains(ch))).ToArray();
-        var preferred = ("EINSFTJP".Except(required)).Where(ch => descs.Count(ix => People[ix].MBTI.Contains(ch)) == 2).ToArray();
+        var required = "EINSFTJP".Where(ch => descs.All(ix => _people[ix].MBTI.Contains(ch))).ToArray();
+        var preferred = ("EINSFTJP".Except(required)).Where(ch => descs.Count(ix => _people[ix].MBTI.Contains(ch)) == 2).ToArray();
         var peopleInfos = names.Select(ix => new
         {
             Index = ix,
-            RequiredCount = required.Count(ch => People[ix].MBTI.Contains(ch)),
-            PreferredCount = preferred.Count(ch => People[ix].MBTI.Contains(ch))
+            RequiredCount = required.Count(ch => _people[ix].MBTI.Contains(ch)),
+            PreferredCount = preferred.Count(ch => _people[ix].MBTI.Contains(ch))
         }).OrderByDescending(info => info.RequiredCount).ToArray();
 
         if (peopleInfos[0].RequiredCount > peopleInfos[1].RequiredCount)
@@ -144,84 +185,96 @@ public class HumanResourcesModule : MonoBehaviour
 
     private bool DescsCycleLeft()
     {
-        if (IsSolved)
+        ButtonLeftDescs.AddInteractionPunch(.5f);
+        Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, ButtonLeftDescs.transform);
+
+        if (_isSolved)
             return false;
 
-        DescIndex = ((DescIndex - 1) + AvailableDescs.Length) % AvailableDescs.Length;
-        SetDesc();
+        _descIndex = ((_descIndex - 1) + _availableDescs.Length) % _availableDescs.Length;
+        setDesc();
 
         return false;
     }
 
     private bool DescsCycleRight()
     {
-        if (IsSolved)
+        ButtonRightDescs.AddInteractionPunch(.5f);
+        Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, ButtonRightDescs.transform);
+
+        if (_isSolved)
             return false;
 
-        DescIndex = (DescIndex + 1) % AvailableDescs.Length;
-        SetDesc();
+        _descIndex = (_descIndex + 1) % _availableDescs.Length;
+        setDesc();
 
         return false;
     }
 
     private bool NamesCycleLeft()
     {
-        if (IsSolved)
+        ButtonLeftNames.AddInteractionPunch(.5f);
+        Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, ButtonLeftNames.transform);
+
+        if (_isSolved)
             return false;
 
-        NameIndex = ((NameIndex - 1) + AvailableNames.Length) % AvailableNames.Length;
-        SetName();
+        _nameIndex = ((_nameIndex - 1) + _availableNames.Length) % _availableNames.Length;
+        setName();
 
         return false;
     }
 
     private bool NamesCycleRight()
     {
-        if (IsSolved)
+        ButtonRightNames.AddInteractionPunch(.5f);
+        Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, ButtonRightNames.transform);
+
+        if (_isSolved)
             return false;
 
-        NameIndex = (NameIndex + 1) % AvailableNames.Length;
-        SetName();
+        _nameIndex = (_nameIndex + 1) % _availableNames.Length;
+        setName();
 
         return false;
     }
 
-    private bool ChooseFire()
+    private bool Fire()
     {
-        if (IsSolved)
+        ButtonFire.AddInteractionPunch();
+        Audio.PlaySoundAtTransform("beep_long", ButtonFire.transform);
+
+        if (_isSolved)
             return false;
 
-        Debug.LogFormat("[Human Resources #{0}] Chose to fire: {1} ({2})", _moduleId, People[AvailableNames[NameIndex]].Name, AvailableNames[NameIndex] == PersonToFire ? "correct" : "wrong");
+        Debug.LogFormat("[Human Resources #{0}] Chose to fire: {1} ({2})", _moduleId, _people[_availableNames[_nameIndex]].Name, _availableNames[_nameIndex] == _personToFire ? "correct" : "wrong");
 
-        if (AvailableNames[NameIndex] == PersonToFire)
-        {
-            CorrectFired = true;
-        }
+        if (_availableNames[_nameIndex] == _personToFire)
+            _correctFired = true;
         else
-        {
             Module.HandleStrike();
-        }
 
         return false;
     }
 
-    private bool ChooseHire()
+    private bool Hire()
     {
-        if (IsSolved)
+        ButtonHire.AddInteractionPunch();
+        Audio.PlaySoundAtTransform("beep_long", ButtonHire.transform);
+
+        if (_isSolved)
             return false;
 
-        Debug.LogFormat("[Human Resources #{0}] Chose to hire: {1} ({2})", _moduleId, People[AvailableNames[NameIndex]].Name, AvailableNames[NameIndex] == PersonToHire ? (CorrectFired ? "correct" : "correct, but need to fire first") : "wrong");
+        Debug.LogFormat("[Human Resources #{0}] Chose to hire: {1} ({2})", _moduleId, _people[_availableNames[_nameIndex]].Name, _availableNames[_nameIndex] == _personToHire ? (_correctFired ? "correct" : "correct, but need to fire first") : "wrong");
 
-        if (AvailableNames[NameIndex] == PersonToHire && CorrectFired)
+        if (_availableNames[_nameIndex] == _personToHire && _correctFired)
         {
             Debug.LogFormat("[Human Resources #{0}] Module solved.", _moduleId);
-            IsSolved = true;
+            _isSolved = true;
             Module.HandlePass();
         }
         else
-        {
             Module.HandleStrike();
-        }
 
         return false;
     }

@@ -1,6 +1,6 @@
 fileFormatVersion: 2
-guid: 0db33ce0b61551544a4e00dca021111e
-timeCreated: 1516833499
+guid: 4e65107cda23029488aad075cde5953f
+timeCreated: 1519645194
 licenseType: Free
 TrueTypeFontImporter:
   serializedVersion: 4
@@ -9,9 +9,9 @@ TrueTypeFontImporter:
   characterSpacing: 0
   characterPadding: 1
   includeFontData: 1
-  fontName: Special Elite
+  fontName: Nidus Sans
   fontNames:
-  - Special Elite
+  - Nidus Sans
   fallbackFontReferences: []
   customCharacters: 
   fontRenderingMode: 0

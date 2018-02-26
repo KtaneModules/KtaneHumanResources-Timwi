@@ -1,9 +1,6 @@
-﻿using UnityEngine;
-using UnityEditor;
-
-namespace HumanResources
+﻿namespace HumanResources
 {
-    public class Person
+    public sealed class Person
     {
         public string Name;
         public string MBTI;

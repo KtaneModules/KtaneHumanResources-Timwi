@@ -1,11 +1,8 @@
-﻿using UnityEngine;
-using UnityEditor;
+﻿using System;
 using System.Collections;
-using System;
-
-using Rnd = UnityEngine.Random;
 using System.Collections.Generic;
 using System.Text;
+using Rnd = UnityEngine.Random;
 
 namespace HumanResources
 {
