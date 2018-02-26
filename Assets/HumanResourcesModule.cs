@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using HumanResources;
@@ -32,7 +33,7 @@ public class HumanResourcesModule : MonoBehaviour
     {
         new Person { Name = "Rebecca", MBTI = "INTJ", Descriptor = "Intellectual" },
         new Person { Name = "Damian", MBTI = "INTP", Descriptor = "Deviser" },
-        new Person { Name = "Jean", MBTI = "INFJ", Descriptor = "Confident" },
+        new Person { Name = "Jean", MBTI = "INFJ", Descriptor = "Confidant" },
         new Person { Name = "Mike", MBTI = "INFP", Descriptor = "Helper" },
         new Person { Name = "River", MBTI = "ISTJ", Descriptor = "Auditor" },
         new Person { Name = "Samuel", MBTI = "ISTP", Descriptor = "Innovator" },
@@ -283,5 +284,44 @@ public class HumanResourcesModule : MonoBehaviour
             Module.HandleStrike();
 
         return false;
+    }
+
+#pragma warning disable 414
+    private string TwitchHelpMessage = @"“!{0} cycle” to see all the names and traits. “!{0} fire X” to fire someone; “!{0} hire X” to hire someone.";
+#pragma warning restore 414
+
+    private IEnumerator ProcessTwitchCommand(string command)
+    {
+        var pieces = command.ToLowerInvariant().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+        if (pieces.Length == 1 && pieces[0] == "cycle")
+        {
+            yield return null;
+            for (int i = 0; i < _availableNames.Length; i++)
+            {
+                ButtonRightNames.OnInteract();
+                yield return new WaitForSeconds(1.5f);
+            }
+            for (int i = 0; i < _availableDescs.Length; i++)
+            {
+                ButtonRightDescs.OnInteract();
+                yield return new WaitForSeconds(1.5f);
+            }
+        }
+        else if (pieces.Length == 2 && (pieces[0] == "hire" || pieces[0] == "fire"))
+        {
+            yield return null;
+            for (int i = 0; i < _availableNames.Length; i++)
+            {
+                if (_people[_availableNames[_nameIndex]].Name.Equals(pieces[1], StringComparison.InvariantCultureIgnoreCase))
+                {
+                    (pieces[0] == "hire" ? ButtonHire : ButtonFire).OnInteract();
+                    yield break;
+                }
+                ButtonRightNames.OnInteract();
+                yield return new WaitForSeconds(.1f);
+            }
+            yield return string.Format("sendtochat Sorry, who is “{0}” again?", pieces[1]);
+        }
     }
 }
