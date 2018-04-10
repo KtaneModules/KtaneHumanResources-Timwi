@@ -287,26 +287,42 @@ public class HumanResourcesModule : MonoBehaviour
     }
 
 #pragma warning disable 414
-    private string TwitchHelpMessage = @"“!{0} cycle” to see all the names and traits. “!{0} fire X” to fire someone; “!{0} hire X” to hire someone.";
+    private string TwitchHelpMessage = @"“!{0} cycle” to see all the names and traits. “!{0} cycle people/traits” to see just one of the two. “!{0} fire X” to fire someone; “!{0} hire X” to hire someone.";
 #pragma warning restore 414
 
+    private static string[] _cycleNames = { "names", "people" };
+    private static string[] _cycleDescs = { "traits", "descriptors" };
     private IEnumerator ProcessTwitchCommand(string command)
     {
         var pieces = command.ToLowerInvariant().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
-        if (pieces.Length == 1 && pieces[0] == "cycle")
+        if ((pieces.Length == 1 && pieces[0] == "cycle") ||
+            (pieces.Length == 2 && pieces[0] == "cycle" && (_cycleNames.Contains(pieces[1]) || _cycleDescs.Contains(pieces[1]))))
         {
             yield return null;
-            for (int i = 0; i < _availableNames.Length; i++)
+            if (pieces.Length == 1 || _cycleNames.Contains(pieces[1]))
             {
-                ButtonRightNames.OnInteract();
-                yield return new WaitForSeconds(1.5f);
+                for (int i = 0; i < _availableNames.Length; i++)
+                {
+                    ButtonRightNames.OnInteract();
+                    yield return "trycancel";
+                    yield return new WaitForSeconds(1.75f);
+                }
             }
-            for (int i = 0; i < _availableDescs.Length; i++)
+            if (pieces.Length == 1 || _cycleDescs.Contains(pieces[1]))
             {
-                ButtonRightDescs.OnInteract();
-                yield return new WaitForSeconds(1.5f);
+                for (int i = 0; i < _availableDescs.Length; i++)
+                {
+                    ButtonRightDescs.OnInteract();
+                    yield return "trycancel";
+                    yield return new WaitForSeconds(1.75f);
+                }
             }
+        }
+        else if (pieces.Length == 2 && pieces[0] == "cycle")
+        {
+            yield return null;
+            yield return "sendtochat Excuse me, cycle what now?";
         }
         else if (pieces.Length == 2 && (pieces[0] == "hire" || pieces[0] == "fire"))
         {
