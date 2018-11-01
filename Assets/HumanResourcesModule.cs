@@ -64,8 +64,9 @@ public class HumanResourcesModule : MonoBehaviour
     private static int _moduleIdCounter = 1;
     private int _moduleId;
 
-    private static string _green = "48E64F";
-    private static string _red = "E63B5E";
+    const string _green = "48E64F";
+    const string _red = "E63B5E";
+    const string _solved = "BBDDFF";
 
     void Start()
     {
@@ -279,8 +280,8 @@ public class HumanResourcesModule : MonoBehaviour
             Debug.LogFormat("[Human Resources #{0}] Module solved.", _moduleId);
             _isSolved = true;
             Module.HandlePass();
-            setText(_nameState, "PAYROLL", "BBDDFF");
-            setText(_descState, "UPDATED", "BBDDFF");
+            setText(_nameState, "PAYROLL", _solved);
+            setText(_descState, "UPDATED", _solved);
         }
         else
             Module.HandleStrike();
