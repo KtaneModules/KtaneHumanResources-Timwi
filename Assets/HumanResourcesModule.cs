@@ -84,7 +84,7 @@ public class HumanResourcesModule : MonoBehaviour
         _availableDescs = Enumerable.Range(0, _people.Length).ToList().Shuffle().Take(5).ToArray();
 
         var personToFire = FindPerson(_availableNames.Take(5), _availableDescs.Take(3));
-        if (personToFire == null)
+        if (personToFire == null || _availableDescs.Skip(3).Contains(personToFire.PersonIndex))
             goto tryAgain;
         _personToFire = personToFire.PersonIndex;
 
@@ -279,6 +279,8 @@ public class HumanResourcesModule : MonoBehaviour
             Debug.LogFormat("[Human Resources #{0}] Module solved.", _moduleId);
             _isSolved = true;
             Module.HandlePass();
+            setText(_nameState, "PAYROLL", "BBDDFF");
+            setText(_descState, "UPDATED", "BBDDFF");
         }
         else
             Module.HandleStrike();
@@ -287,7 +289,7 @@ public class HumanResourcesModule : MonoBehaviour
     }
 
 #pragma warning disable 414
-    private string TwitchHelpMessage = @"“!{0} cycle” to see all the names and traits. “!{0} cycle people/traits” to see just one of the two. “!{0} fire X” to fire someone; “!{0} hire X” to hire someone.";
+    private readonly string TwitchHelpMessage = @"!{0} cycle [see all the names and traits] | !{0} cycle people/traits [see just one of the two] | !{0} fire X | !{0} hire X";
 #pragma warning restore 414
 
     private static string[] _cycleNames = { "names", "people" };
