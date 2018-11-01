@@ -26,10 +26,10 @@ public class HumanResourcesModule : MonoBehaviour
 
     public TextMesh NamesText;
     public TextMesh DescsText;
-    private TextState _nameState = new TextState();
-    private TextState _descState = new TextState();
+    private readonly TextState _nameState = new TextState();
+    private readonly TextState _descState = new TextState();
 
-    private Person[] _people =
+    private static readonly Person[] _people =
     {
         new Person { Name = "Rebecca", MBTI = "INTJ", Descriptor = "Intellectual" },
         new Person { Name = "Damian", MBTI = "INTP", Descriptor = "Deviser" },
