@@ -169,7 +169,7 @@ public class HumanResourcesModule : MonoBehaviour
     private FindPersonResult FindPerson(IEnumerable<int> names, IEnumerable<int> descs)
     {
         var required = "EINSFTJP".Where(ch => descs.All(ix => _people[ix].MBTI.Contains(ch))).ToArray();
-        var preferred = ("EINSFTJP".Except(required)).Where(ch => descs.Count(ix => _people[ix].MBTI.Contains(ch)) == 2).ToArray();
+        var preferred = "EINSFTJP".Except(required).Where(ch => descs.Count(ix => _people[ix].MBTI.Contains(ch)) == 2).ToArray();
         var peopleInfos = names.Select(ix => new
         {
             Index = ix,
@@ -342,5 +342,36 @@ public class HumanResourcesModule : MonoBehaviour
             }
             yield return string.Format("sendtochat Sorry, who is “{0}” again?", pieces[1]);
         }
+    }
+
+    IEnumerator TwitchHandleForcedSolve()
+    {
+        if (!_correctFired)
+        {
+            while (_availableNames[_nameIndex] != _personToFire)
+            {
+                ButtonRightNames.OnInteract();
+                yield return new WaitForSeconds(.1f);
+            }
+
+            Debug.LogFormat(@"{0}, {1}", _nameState.CurrentlyDeleting, _nameState.InsText);
+            while (_nameState.CurrentlyDeleting || _nameState.CurIndex < _nameState.InsText.Length)
+                yield return true;
+
+            ButtonFire.OnInteract();
+            yield return new WaitForSeconds(.5f);
+        }
+
+        while (_availableNames[_nameIndex] != _personToHire)
+        {
+            ButtonRightNames.OnInteract();
+            yield return new WaitForSeconds(.1f);
+        }
+
+        while (_nameState.CurrentlyDeleting || _nameState.CurIndex < _nameState.InsText.Length)
+            yield return true;
+
+        ButtonHire.OnInteract();
+        yield return new WaitForSeconds(.5f);
     }
 }
