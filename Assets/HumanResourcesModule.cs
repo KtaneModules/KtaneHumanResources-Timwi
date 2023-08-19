@@ -354,7 +354,6 @@ public class HumanResourcesModule : MonoBehaviour
                 yield return new WaitForSeconds(.1f);
             }
 
-            Debug.LogFormat(@"{0}, {1}", _nameState.CurrentlyDeleting, _nameState.InsText);
             while (_nameState.CurrentlyDeleting || _nameState.CurIndex < _nameState.InsText.Length)
                 yield return true;
 
